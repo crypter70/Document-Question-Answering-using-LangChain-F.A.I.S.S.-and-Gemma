@@ -1,24 +1,31 @@
-
-
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.prompts import PromptTemplate
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.vectorstores.faiss import FAISS
 from langchain.docstore.document import Document
-from dotenv import load_dotenv
 import streamlit as st
 
 
-load_dotenv()
+repo_id = "google/gemma-7b"
 
-repo_id = "google/gemma-7b-it"
+# with streamlit cloud deployment
 llm = HuggingFaceEndpoint(
-    repo_id=repo_id
+    repo_id=repo_id,
+    huggingfacehub_api_token=st.secrets["api_token"]
 )
+
+# from dotenv import load_dotenv
+# load_dotenv()
+
+# without deployment
+# llm = HuggingFaceEndpoint(
+#     repo_id=repo_id
+# )
+
 
 chara_text_splitter = CharacterTextSplitter()
 recur_text_splitter = RecursiveCharacterTextSplitter(
@@ -70,10 +77,11 @@ def generate_answer(llm, retriever, query):
 
 
 def main():
-    
-    st.title("Document Question Answering 📝")
-    st.subheader("Powered by LangChain, F.A.I.S.S., and Gemma")
 
+    st.title("Document Question Answering 📝")
+    st.markdown("""Language: English and Indonesian""")
+    st.markdown("""This app will answer questions asked by the user based on the uploaded document file.""")
+    
     data = st.file_uploader('Upload your PDF document', type="pdf")
     if data is not None:
         pdf_reader = PdfReader(data)
@@ -98,6 +106,9 @@ def main():
                 answer = generate_answer(llm, retriever, query)
             st.subheader("Answer:")
             st.write(answer) 
+
+    st.markdown("---")
+    st.markdown("<div style='text-align: center;'>Powered by <a href='https://python.langchain.com/v0.1/docs/use_cases/question_answering/' target='_blank'>LangChain</a>, <a href='https://github.com/facebookresearch/faiss' target='_blank'>F.A.I.S.S.</a>, and <a href='https://huggingface.co/google/gemma-7b' target='_blank'>Gemma</a> </div>", unsafe_allow_html=True)
             
 
 if __name__ == "__main__":
